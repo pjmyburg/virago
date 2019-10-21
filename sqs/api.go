@@ -68,7 +68,40 @@ func (s *API) GetQueueAttributes(w http.ResponseWriter, req *http.Request) {
 // GetQueueURL returns the URL of an existing Amazon SQS queue
 func (s *API) GetQueueURL(w http.ResponseWriter, req *http.Request) {
 	log.Debug("GetQueueURL")
-	w.WriteHeader(http.StatusNotImplemented)
+
+	queueName := req.FormValue("QueueName")
+	queue, ok := s.sqs.queues[queueName]
+	if !ok {
+		w.Header().Set("Content-Type", "application/xml")
+		w.WriteHeader(http.StatusBadRequest)
+		error := ErrorResponse{
+			Error:     ErrorResult{
+				Type:    "Not Found",
+				Code:    "AWS.SimpleQueueService.NonExistentQueue",
+				Message: "The specified queue does not exist for this wsdl version.",
+			},
+			RequestId: "00000000-0000-0000-0000-000000000000",
+		}
+		enc := xml.NewEncoder(w)
+		enc.Indent("  ", "    ")
+		if err := enc.Encode(error); err != nil {
+			log.Errorf("error: %s", err)
+		}
+		return
+	}
+
+	response := GetQueueURLResponse{
+		Result:   GetQueueURLResult{queue.url},
+		MetaData: ResponseMetaData{"00000000-0000-0000-0000-000000000000"},
+	}
+
+	w.Header().Set("Content-Type", "application/xml")
+	enc := xml.NewEncoder(w)
+	enc.Indent("  ", "    ")
+	if err := enc.Encode(response); err != nil {
+		log.Errorf("error: %s", err)
+	}
+
 }
 
 // ListDeadLetterSourceQueues returns a list of your queues that have the RedrivePolicy queue attribute configured with a dead-letter queue
