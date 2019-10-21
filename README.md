@@ -6,6 +6,7 @@ Lightning fast AWS implementation for local testing (or at least it will be)
 * **SQS**
   * Currently in development
   * Features covered:
+    * GetQueueUrl
     * ListQueues
-
+    
 Next up, **SNS**
