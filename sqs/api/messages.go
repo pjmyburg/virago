@@ -1,4 +1,4 @@
-package sqs
+package api
 
 import "encoding/xml"
 
@@ -40,5 +40,5 @@ type ErrorResult struct {
 // ErrorResponse represents the AWS error XML structure
 type ErrorResponse struct {
 	Error     ErrorResult `xml:"Error"`
-	RequestId string      `xml:"RequestId"`
+	RequestID string      `xml:"RequestId"`
 }

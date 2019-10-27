@@ -5,6 +5,7 @@ import (
 	"github.com/pjmyburg/virago/config"
 	"github.com/pjmyburg/virago/server"
 	"github.com/pjmyburg/virago/sqs"
+	"github.com/pjmyburg/virago/sqs/api"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
@@ -30,7 +31,7 @@ func main() {
 	}
 
 	sqsInstance := sqs.New(conf)
-	sqsAPI := sqs.NewAPI(sqsInstance)
+	sqsAPI := api.NewAPI(sqsInstance)
 
 	s := server.New(sqsAPI)
 	if err := http.ListenAndServe("0.0.0.0:1234", s); err != nil {

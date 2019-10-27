@@ -3,14 +3,14 @@ package server
 import (
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/pjmyburg/virago/sqs"
+	"github.com/pjmyburg/virago/sqs/api"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"net/http/httputil"
 )
 
 // New creates a new instance of the Virago HTTP server
-func New(sqsAPI *sqs.API) http.Handler {
+func New(sqsAPI *api.API) http.Handler {
 	r := mux.NewRouter()
 	r.HandleFunc("/", handler(sqsAPI)).Methods("GET", "POST")
 	r.HandleFunc("/health", health).Methods("GET")
@@ -28,7 +28,7 @@ func health(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func handler(sqsAPI *sqs.API) func(w http.ResponseWriter, req *http.Request) {
+func handler(sqsAPI *api.API) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		if log.IsLevelEnabled(log.DebugLevel) {
 			requestDump, err := httputil.DumpRequest(req, true)
@@ -53,7 +53,7 @@ func handler(sqsAPI *sqs.API) func(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func routeAction(action string, sqsAPI *sqs.API) (http.HandlerFunc, error) {
+func routeAction(action string, sqsAPI *api.API) (http.HandlerFunc, error) {
 	switch action {
 	case "ListQueues":
 		return sqsAPI.ListQueues, nil

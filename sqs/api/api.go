@@ -1,19 +1,19 @@
-package sqs
+package api
 
 import (
 	"encoding/xml"
+	"github.com/pjmyburg/virago/sqs"
 	log "github.com/sirupsen/logrus"
 	"net/http"
-	"strings"
 )
 
 // API implements the functions on the AWS SQS API
 type API struct {
-	sqs *SQS
+	sqs *sqs.SQS
 }
 
 // NewAPI creates a new instance of the SQS API using the supplied SQS instance
-func NewAPI(sqs *SQS) *API {
+func NewAPI(sqs *sqs.SQS) *API {
 	return &API{sqs}
 }
 
@@ -70,28 +70,28 @@ func (s *API) GetQueueURL(w http.ResponseWriter, req *http.Request) {
 	log.Debug("GetQueueURL")
 
 	queueName := req.FormValue("QueueName")
-	queue, ok := s.sqs.queues[queueName]
-	if !ok {
+	url, err := s.sqs.GetQueueURL(queueName)
+	if err != nil {
 		w.Header().Set("Content-Type", "application/xml")
 		w.WriteHeader(http.StatusBadRequest)
-		error := ErrorResponse{
-			Error:     ErrorResult{
+		err := ErrorResponse{
+			Error: ErrorResult{
 				Type:    "Not Found",
 				Code:    "AWS.SimpleQueueService.NonExistentQueue",
 				Message: "The specified queue does not exist for this wsdl version.",
 			},
-			RequestId: "00000000-0000-0000-0000-000000000000",
+			RequestID: "00000000-0000-0000-0000-000000000000",
 		}
 		enc := xml.NewEncoder(w)
 		enc.Indent("  ", "    ")
-		if err := enc.Encode(error); err != nil {
+		if err := enc.Encode(err); err != nil {
 			log.Errorf("error: %s", err)
 		}
 		return
 	}
 
 	response := GetQueueURLResponse{
-		Result:   GetQueueURLResult{queue.url},
+		Result:   GetQueueURLResult{url},
 		MetaData: ResponseMetaData{"00000000-0000-0000-0000-000000000000"},
 	}
 
@@ -115,12 +115,7 @@ func (s *API) ListQueues(w http.ResponseWriter, req *http.Request) {
 	log.Debug("ListQueues")
 
 	queueNamePrefix := req.FormValue("QueueNamePrefix")
-	var queues []string
-	for k, v := range s.sqs.queues {
-		if strings.HasPrefix(k, queueNamePrefix) {
-			queues = append(queues, v.url)
-		}
-	}
+	queues := s.sqs.ListQueues(queueNamePrefix)
 
 	response := ListQueuesResponse{
 		Result:   ListQueuesResult{queues},
