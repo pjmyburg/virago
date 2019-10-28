@@ -8,6 +8,10 @@ of letting an element to go back to the front of the queue
 */
 package queue
 
+import (
+	log "github.com/sirupsen/logrus"
+)
+
 // Queue represents a first in, first out structure, backed by a self-expanding slice
 type Queue struct {
 	buf               []interface{}
@@ -49,6 +53,8 @@ func (q *Queue) resize() {
 
 // Enqueue puts an element on the end of the queue.
 func (q *Queue) Enqueue(msg interface{}) {
+	log.Debugf("Enqueue: %v", msg)
+
 	if q.count == len(q.buf) {
 		q.resize()
 	}

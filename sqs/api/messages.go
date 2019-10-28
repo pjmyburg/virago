@@ -30,6 +30,18 @@ type ListQueuesResponse struct {
 	MetaData ResponseMetaData `xml:"ResponseMetadata"`
 }
 
+type SendMessageResult struct {
+	MD5OfMessageAttributes string `xml:"MD5OfMessageAttributes"`
+	MD5OfMessageBody       string `xml:"MD5OfMessageBody"`
+	MessageID              string `xml:"MessageId"`
+	SequenceNumber         string `xml:"SequenceNumber"`
+}
+
+type SendMessageResponse struct {
+	Result   SendMessageResult `xml:"SendMessageResult"`
+	Metadata ResponseMetaData  `xml:"ResponseMetadata"`
+}
+
 // ErrorResult is part of the ErrorResponse message
 type ErrorResult struct {
 	Type    string `xml:"Type,omitempty"`

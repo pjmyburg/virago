@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/ghodss/yaml v1.0.0
+	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.3
 	github.com/sirupsen/logrus v1.4.2
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect

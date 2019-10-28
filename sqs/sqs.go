@@ -2,6 +2,7 @@ package sqs
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/pjmyburg/virago/config"
 	"github.com/pjmyburg/virago/sqs/queue"
 	"strings"
@@ -13,7 +14,13 @@ type SQS struct {
 }
 
 type message struct {
-	body string
+	id           string
+	body         string
+	attribute    map[string]string
+	sysAttribute map[string]string
+	delaySeconds int
+	deDupID      string
+	groupID      string
 }
 
 // New creates a new SQS instance and creates queues using the supplied config on startup
@@ -23,6 +30,8 @@ func New(conf *config.Config) *SQS {
 		qw := queueWrapper{
 			url:   fmt.Sprintf("https://%s.queue.amazonaws.com/%s/%s", config.Region, config.AccountID, confQ.Name),
 			queue: queue.New(),
+			in:    make(chan []message),
+			rcv:   make(chan ReceiveRequest),
 		}
 		qw.Run()
 		queues[confQ.Name] = qw
@@ -52,4 +61,26 @@ func (s *SQS) ListQueues(prefix string) []string {
 	}
 
 	return queues
+}
+
+func (s *SQS) SendMessage(queueURL string, body string, groupID string) (string, error) {
+	name := queueName(queueURL)
+	q, ok := s.queues[name]
+	if !ok {
+		return "", fmt.Errorf("queue not found")
+	}
+
+	msg := message{
+		id:      uuid.New().String(),
+		body:    body,
+		groupID: groupID,
+	}
+	q.in <- []message{msg}
+
+	return msg.id, nil
+}
+
+func queueName(queueURL string) string {
+	segments := strings.Split(queueURL, "/")
+	return segments[len(segments)-1]
 }

@@ -157,7 +157,47 @@ func (s *API) RemovePermission(w http.ResponseWriter, req *http.Request) {
 // SendMessage delivers a message to the specified queue
 func (s *API) SendMessage(w http.ResponseWriter, req *http.Request) {
 	log.Debug("SendMessage")
-	w.WriteHeader(http.StatusNotImplemented)
+	body := req.FormValue("MessageBody")
+	groupID := req.FormValue("MessageGroupId")
+	// TODO message attributes
+	queueURL := getQueueURL(req)
+
+	messageID, err := s.sqs.SendMessage(queueURL, body, groupID)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/xml")
+		w.WriteHeader(http.StatusBadRequest)
+		err := ErrorResponse{
+			Error: ErrorResult{
+				Type:    "Not Found",
+				Code:    "AWS.SimpleQueueService.NonExistentQueue",
+				Message: "The specified queue does not exist for this wsdl version.",
+			},
+			RequestID: "00000000-0000-0000-0000-000000000000",
+		}
+		enc := xml.NewEncoder(w)
+		enc.Indent("  ", "    ")
+		if err := enc.Encode(err); err != nil {
+			log.Errorf("error: %s", err)
+		}
+		return
+	}
+
+	response := SendMessageResponse{
+		Result: SendMessageResult{
+			MD5OfMessageAttributes: "",
+			MD5OfMessageBody:       "",
+			MessageID:              messageID,
+			SequenceNumber:         "",
+		},
+		Metadata: ResponseMetaData{"00000000-0000-0000-0000-000000000000"},
+	}
+
+	w.Header().Set("Content-Type", "application/xml")
+	enc := xml.NewEncoder(w)
+	enc.Indent("  ", "    ")
+	if err := enc.Encode(response); err != nil {
+		log.Errorf("error: %s", err)
+	}
 }
 
 // SendMessageBatch delivers up to ten messages to the specified queue
@@ -182,4 +222,13 @@ func (s *API) TagQueue(w http.ResponseWriter, req *http.Request) {
 func (s *API) UntagQueue(w http.ResponseWriter, req *http.Request) {
 	log.Debug("UntagQueue")
 	w.WriteHeader(http.StatusNotImplemented)
+}
+
+func getQueueURL(req *http.Request) string {
+	url := req.FormValue("QueueUrl")
+	if url != "" {
+		return url
+	}
+
+	return req.URL.Path
 }
